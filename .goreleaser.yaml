@@ -8,14 +8,18 @@
 
 version: 2
 
+# Project name should ideally match the project name in your Cargo.toml.
+project_name: example
+
+# Hooks ran before actually building anything.
+# Here we use them to prepare for building.
 before:
   hooks:
-    # if you don't do these things before calling goreleaser, it might be a
-    # good idea to do them here:
     - rustup default stable
     - cargo install --locked cargo-zigbuild
     - cargo fetch --locked
 
+# Actually builds the binaries.
 builds:
   - builder: rust
     targets:
@@ -25,6 +29,7 @@ builds:
       - aarch64-unknown-linux-gnu
       - aarch64-apple-darwin
 
+# Creates archives for each target.
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
@@ -39,6 +44,7 @@ archives:
       - goos: windows
         format: zip
 
+# Changelog configuration (will be in the github release).
 changelog:
   sort: asc
   filters:
@@ -46,9 +52,93 @@ changelog:
       - "^docs:"
       - "^test:"
 
+# A footer to add to all releases.
 release:
   footer: >-
 
     ---
 
     Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+
+# Creates Linux packages.
+nfpms:
+  - maintainer: Carlos Alexandro Becker <carlos@becker.software>
+    formats:
+      - deb
+      - apk
+      - rpm
+
+# Creates Darwin universal binaries.
+universal_binaries:
+  - replace: true
+
+# Enables source archives.
+source:
+  enabled: true
+
+# SBOMs for the archives and source archives.
+sboms:
+  - artifacts: archive
+  - id: source
+    artifacts: source
+
+# Sign binaries with cosign.
+signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+    output: true
+
+# Create Docker images.
+# We create a manifest below, so here the images need the suffix with the
+# architecture.
+dockers:
+  - image_templates:
+      - "ghcr.io/goreleaser/example-rust:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile
+    goarch: arm64
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+  - image_templates:
+      - "ghcr.io/goreleaser/example-rust:{{ .Tag }}-amd64"
+    dockerfile: Dockerfile
+    goarch: amd64
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.name={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.source={{.GitURL}}"
+
+# Here we join both images into a Docker manifest.
+docker_manifests:
+  - name_template: "ghcr.io/goreleaser/example-rust:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/goreleaser/example-rust:{{ .Tag }}-arm64"
+      - "ghcr.io/goreleaser/example-rust:{{ .Tag }}-amd64"
+
+# Sign the Docker images with cosign as well.
+docker_signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    artifacts: images
+    output: true
+    args:
+      - "sign"
+      - "${artifact}"
+      - "--yes"
