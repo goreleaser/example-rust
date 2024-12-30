@@ -106,6 +106,7 @@ dockers:
       - "ghcr.io/goreleaser/example-rust:{{ .Tag }}-arm64"
     dockerfile: Dockerfile
     goarch: arm64
+    use: buildx
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -113,10 +114,12 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/arm64"
   - image_templates:
       - "ghcr.io/goreleaser/example-rust:{{ .Tag }}-amd64"
     dockerfile: Dockerfile
     goarch: amd64
+    use: buildx
     build_flag_templates:
       - "--pull"
       - "--label=org.opencontainers.image.created={{.Date}}"
@@ -124,6 +127,7 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.source={{.GitURL}}"
+      - "--platform=linux/amd64"
 
 # Here we join both images into a Docker manifest.
 docker_manifests:
