@@ -147,3 +147,18 @@ docker_signs:
       - "sign"
       - "${artifact}"
       - "--yes"
+
+# Sets up homebrew-taps.
+# PS: this will require a personal access token, as it is cross-repository.
+brews:
+  - repository:
+      owner: goreleaser
+      name: example-homebrew-tap
+      token: "{{ .Env.GH_PAT }}"
+    directory: Formula
+    homepage: https://goreleaser.com
+    description: Example rust release.
+    license: MIT
+    # usually you don't need to set this, we do to prevent conflicts with other
+    # example-* repositories
+    name: example-rust
