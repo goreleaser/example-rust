@@ -79,15 +79,11 @@ source:
 
 # SBOMs for the archives and source archives.
 sboms:
-  - artifacts: archive
-  - id: source
-    artifacts: source
+  - artifacts: any
 
 # Sign binaries with cosign.
 signs:
   - cmd: cosign
-    env:
-      - COSIGN_EXPERIMENTAL=1
     certificate: "${artifact}.pem"
     args:
       - sign-blob
@@ -96,7 +92,6 @@ signs:
       - "${artifact}"
       - "--yes"
     artifacts: checksum
-    output: true
 
 # Create Docker images.
 # We create a manifest below, so here the images need the suffix with the
@@ -139,10 +134,7 @@ docker_manifests:
 # Sign the Docker images with cosign as well.
 docker_signs:
   - cmd: cosign
-    env:
-      - COSIGN_EXPERIMENTAL=1
-    artifacts: images
-    output: true
+    artifacts: manifests
     args:
       - "sign"
       - "${artifact}"
