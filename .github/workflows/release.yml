@@ -22,7 +22,7 @@ jobs:
       # More assembly might be required: Docker logins, GPG, etc.
       # It all depends on your needs.
       - uses: mlugg/setup-zig@v2
-      - uses: sigstore/cosign-installer@v3.9.2
+      - uses: sigstore/cosign-installer@v3.10.0
       - uses: anchore/sbom-action/download-syft@v0.20.5
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
